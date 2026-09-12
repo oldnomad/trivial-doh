@@ -1,0 +1,19 @@
+{
+    "name": "oldnomad/trivial-doh",
+    "description": "Simple DoH server.",
+    "type": "project",
+    "require-dev": {
+        "psalm/phar": "^6",
+        "php-cs-fixer/shim": "^3"
+    },
+    "authors": [
+        {
+            "name": "Alec Kojaev",
+            "email": "alec@kojaev.name"
+        }
+    ],
+    "scripts": {
+        "cs": "php-cs-fixer fix --using-cache=no --dry-run --diff --show-progress=dots",
+        "psalm": "psalm.phar --config=psalm.xml --no-cache"
+    }
+}
