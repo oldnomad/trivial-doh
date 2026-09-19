@@ -63,6 +63,25 @@ $ php doh.php GET AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: [2001:4860:4860::8888]:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004ac4293f3c00c000100010000012c00046814179a
+$ ./scripts/dns-decode.pl 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004ac4293f3c00c000100010000012c00046814179a
+;; HEADER SECTION
+;;      id = 0
+;;      qr = 1  aa = 0  tc = 0  rd = 1  opcode = QUERY
+;;      ra = 1  z  = 0  ad = 0  cd = 0  rcode  = NOERROR
+;;      do = 0  co = 0  de = 0
+;;      qdcount = 1     ancount = 2
+;;      nscount = 0     arcount = 0
+
+;; QUESTION SECTION (1 record)
+;; www.example.com.     IN      A
+
+;; ANSWER SECTION (2 records)
+www.example.com.        300     IN      A       172.66.147.243
+www.example.com.        300     IN      A       104.20.23.154
+
+;; AUTHORITY SECTION (0 records)
+
+;; ADDITIONAL SECTION (0 records)
 ```
 
 If the first argument is `POST`, DNS message is read from the standard input:
