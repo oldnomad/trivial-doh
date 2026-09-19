@@ -57,6 +57,8 @@ If the first argument is `GET`, the second argument is interpreted as a
 Base64URL-encoded DNS message:
 
 ```
+$ ./scripts/dns-encode.pl www.example.com A | base64 | tr -d '=' | tr '+/' '-_'
+AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
 $ php doh.php GET AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: [2001:4860:4860::8888]:53
@@ -66,9 +68,27 @@ RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c
 If the first argument is `POST`, DNS message is read from the standard input:
 
 ```
-$ echo '00000100000100000000000003777777076578616d706c6503636f6d0000010001' | xxd -r -p | php doh.php POST
+$ ./scripts/dns-encode.pl www.example.com A | php doh.php POST
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: 8.8.8.8:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004082f4506c00c000100010000012c000408067006
+$ ./scripts/dns-decode.pl 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004082f4506c00c000100010000012c000408067006
+;; HEADER SECTION
+;;      id = 0
+;;      qr = 1  aa = 0  tc = 0  rd = 1  opcode = QUERY
+;;      ra = 1  z  = 0  ad = 0  cd = 0  rcode  = NOERROR
+;;      do = 0  co = 0  de = 0
+;;      qdcount = 1     ancount = 2
+;;      nscount = 0     arcount = 0
 
+;; QUESTION SECTION (1 record)
+;; www.example.com.     IN      A
+
+;; ANSWER SECTION (2 records)
+www.example.com.        300     IN      A       8.47.69.6
+www.example.com.        300     IN      A       8.6.112.6
+
+;; AUTHORITY SECTION (0 records)
+
+;; ADDITIONAL SECTION (0 records)
 ```
