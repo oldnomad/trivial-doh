@@ -9,16 +9,16 @@
     "packages-dev": [
         {
             "name": "php-cs-fixer/shim",
-            "version": "v3.95.25",
+            "version": "v3.95.27",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/shim.git",
-                "reference": "7bc6ed86d41533dbfa5604fb4dd4d6a656b87254"
+                "reference": "cba177ed1173161a9e46d46c7bf3cf614ce66277"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/shim/zipball/7bc6ed86d41533dbfa5604fb4dd4d6a656b87254",
-                "reference": "7bc6ed86d41533dbfa5604fb4dd4d6a656b87254",
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/shim/zipball/cba177ed1173161a9e46d46c7bf3cf614ce66277",
+                "reference": "cba177ed1173161a9e46d46c7bf3cf614ce66277",
                 "shasum": ""
             },
             "require": {
@@ -55,7 +55,7 @@
             "description": "A tool to automatically fix PHP code style",
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/shim/issues",
-                "source": "https://github.com/PHP-CS-Fixer/shim/tree/v3.95.25"
+                "source": "https://github.com/PHP-CS-Fixer/shim/tree/v3.95.27"
             },
             "funding": [
                 {
@@ -63,20 +63,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-08T11:12:09+00:00"
+            "time": "2026-09-22T09:55:22+00:00"
         },
         {
             "name": "psalm/phar",
-            "version": "6.17.1",
+            "version": "6.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/psalm/phar.git",
-                "reference": "fa2a6ff9c8831dcb783b87e163e81c0b5605b5ab"
+                "reference": "170f6af92df7b9813a262346a6fedd16304c8fbb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/psalm/phar/zipball/fa2a6ff9c8831dcb783b87e163e81c0b5605b5ab",
-                "reference": "fa2a6ff9c8831dcb783b87e163e81c0b5605b5ab",
+                "url": "https://api.github.com/repos/psalm/phar/zipball/170f6af92df7b9813a262346a6fedd16304c8fbb",
+                "reference": "170f6af92df7b9813a262346a6fedd16304c8fbb",
                 "shasum": ""
             },
             "require": {
@@ -96,9 +96,9 @@
             "description": "Composer-based Psalm Phar",
             "support": {
                 "issues": "https://github.com/psalm/phar/issues",
-                "source": "https://github.com/psalm/phar/tree/6.17.1"
+                "source": "https://github.com/psalm/phar/tree/6.18.0"
             },
-            "time": "2026-09-12T13:55:13+00:00"
+            "time": "2026-09-21T11:07:40+00:00"
         }
     ],
     "aliases": [],
