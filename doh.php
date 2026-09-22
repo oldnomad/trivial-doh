@@ -77,6 +77,26 @@ final class Config
     }
 
     /**
+     * Choose next index.
+     *
+     * @param integer $limit Upper limit for index (exclusive).
+     *
+     * @return integer Next index.
+     */
+    private static function nextModulo(int $limit): int
+    {
+        if (!function_exists('apcu_enabled') || !apcu_enabled()) {
+            return rand(0, $limit - 1);
+        }
+        $index = apcu_inc('doh.counter');
+        if ($index === false) {
+            apcu_store('doh.counter', 0);
+            $index = 0;
+        }
+        return (($index % $limit) + $limit) % $limit;
+    }
+
+    /**
      * Choose a server to use.
      *
      * If APCu is enabled, this method follows round-robin strategy.
@@ -87,20 +107,7 @@ final class Config
     public function chooseServer(): string
     {
         $len = count($this->servers);
-        if (function_exists('apcu_enabled') && apcu_enabled()) {
-            apcu_add('doh.counter', -1);
-            $index = apcu_inc('doh.counter');
-            if ($index === false) {
-                apcu_store('doh.counter', 0);
-                $index = 0;
-            }
-            $index %= $len;
-            if ($index < 0) {
-                $index += $len;
-            }
-        } else {
-            $index = rand(0, $len - 1);
-        }
+        $index = self::nextModulo($len);
         return $this->servers[$index] . ':' . DNS_PORT;
     }
 
