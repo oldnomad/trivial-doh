@@ -2,9 +2,13 @@
     "name": "oldnomad/trivial-doh",
     "description": "Simple DoH server.",
     "type": "project",
+    "require": {
+        "php": ">=8.3"
+    },
     "require-dev": {
         "psalm/phar": "^6",
-        "php-cs-fixer/shim": "^3"
+        "php-cs-fixer/shim": "^3",
+        "php-parallel-lint/php-parallel-lint": "^1"
     },
     "authors": [
         {
@@ -14,6 +18,8 @@
     ],
     "scripts": {
         "cs": "php-cs-fixer fix --using-cache=no --dry-run --diff --show-progress=dots",
-        "psalm": "psalm.phar --config=psalm.xml --no-cache"
+        "lint": "parallel-lint --show-deprecated src/",
+        "psalm": "psalm.phar --config=psalm.xml --no-cache",
+        "tests": [ "@cs", "@lint", "@psalm" ]
     }
 }
