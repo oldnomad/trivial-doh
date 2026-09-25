@@ -6,15 +6,14 @@ use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
 return (new Config())
-    ->setRiskyAllowed(false)
+    ->setRiskyAllowed(true)
     ->setRules([
-        '@auto' => true
+       '@auto' => true,
+       '@PSR12' => true
     ])
-    // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
+    ->setUsingCache(false)
     ->setFinder(
         (new Finder())
-            // 💡 root folder to check
-            ->in(__DIR__)
-            
+            ->in(__DIR__.'/src')
     )
 ;

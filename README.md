@@ -14,11 +14,11 @@ The server is fully compliant with [RFC 8484](https://www.rfc-editor.org/info/rf
 
 ## Installation
 
-There's no special installation needed. Simply copy `doh.php` to
+There's no special installation needed. Simply copy `src/doh.php` to
 any location where your web server can execute PHP scripts.
 
-If you want to customize the configuration, copy `doh.json` (see below)
-to the same location.
+If you want to customize the configuration, copy `src/doh.json`
+to the same location and customize it as described below.
 
 If you already have an enabled site, it's better to place the script
 in a separate directory. For example (Apache):
@@ -27,7 +27,7 @@ in a separate directory. For example (Apache):
 <VirtualHost *:443>
     ...your existing configuration here...
 
-    Alias /doh /srv/www/doh/doh.php
+    Alias /dns-query /srv/www/doh/doh.php
     <Directory "/srv/www/doh">
         Satisfy Any
     </Directory>
@@ -59,7 +59,7 @@ Base64URL-encoded DNS message:
 ```
 $ ./scripts/dns-encode.pl www.example.com A | base64 | tr -d '=' | tr '+/' '-_'
 AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
-$ php doh.php GET AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
+$ php ./src/doh.php GET AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: [2001:4860:4860::8888]:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004ac4293f3c00c000100010000012c00046814179a
@@ -87,7 +87,7 @@ www.example.com.        300     IN      A       104.20.23.154
 If the first argument is `POST`, DNS message is read from the standard input:
 
 ```
-$ ./scripts/dns-encode.pl www.example.com A | php doh.php POST
+$ ./scripts/dns-encode.pl www.example.com A | php ./src/doh.php POST
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: 8.8.8.8:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004082f4506c00c000100010000012c000408067006

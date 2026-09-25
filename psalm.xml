@@ -12,6 +12,6 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd">
     <projectFiles>
-        <file name="doh.php" />
+        <directory name="src" />
     </projectFiles>
 </psalm>
