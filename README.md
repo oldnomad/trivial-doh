@@ -12,6 +12,16 @@ servers specified in the configuration.
 
 The server is fully compliant with [RFC 8484](https://www.rfc-editor.org/info/rfc8484/).
 
+## Requirements
+
+The only requirement is PHP version 8.3 or higher. JSON extension,
+which is used by this script, is an always-enabled core extension
+since PHP 8.0.
+
+If APCu extension is enabled, the script will use round-robin
+balancing when selecting a DNS server to forward the request.
+Otherwise, a random DNS server from the list will be chosen.
+
 ## Installation
 
 There's no special installation needed. Simply copy `src/doh.php` to
@@ -47,7 +57,9 @@ should contain a JSON object with following properties:
   address is used, it must be enclosed in square brackets (e.g.
   `"[2001:db8::1]"`). Default set contains all Google public DNS servers,
   both IPv4 and IPv6 addresses.
-- `"debug"`: integer, specifies debugging level. Default is 0 (no debug messages).
+- `"debug"`: integer, specifies debugging level. Supported levels are:
+  0 (no debug messages), 1 (report DNS errors), and 2 (also report all
+  requests and responses). Default is 0 (no debug messages).
 
 ## Running from command line
 
