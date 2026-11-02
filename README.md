@@ -126,10 +126,10 @@ www.example.com.        300     IN      A       8.6.112.6
 
 ## Possible future improvements
 
-- Current version of the script doesn't specify `Cache-Control` header in
-  the response. That's not a problem for DoH clients, but if there's a
-  proxy between the client and the server, this can lead to stale response
-  being served to the client.
+- Current version of the script always sets `max-age` parameter to zero in
+  `Cache-Control` header in the response, to prevent caching. RFC recommends
+  using answer RRs minimum TTL instead. Current behavior prevents caching
+  responses even when they are still valid.
 
 - Current version of the script doesn't cache responses, possibly creating
   unnecessary extra load on the parent DNS server.

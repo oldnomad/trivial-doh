@@ -370,6 +370,7 @@ final class Server
             return;
         }
         header('Content-Type: ' . RAW_CONTENT_TYPE);
+        header('Cache-Control: max-age=0, no-cache');
         print $response;
     }
 
