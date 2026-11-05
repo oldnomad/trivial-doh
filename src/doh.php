@@ -176,6 +176,81 @@ final class Config
     }
 }
 
+final class DnsMessage
+{
+    private function __construct(
+        /**
+         * Message data.
+         */
+        public readonly string $data,
+        /**
+         * Message length.
+         */
+        public readonly int $length,
+        /**
+         * Message ID.
+         */
+        public readonly int $id,
+        /**
+         * Message flags (including opcode and rcode).
+         */
+        public readonly int $flags,
+        /**
+         * Question section count.
+         */
+        public readonly int $qdCount,
+        /**
+         * Answer section count.
+         */
+        public readonly int $anCount,
+        /**
+         * Authority section count.
+         */
+        public readonly int $nsCount,
+        /**
+         * Additional section count.
+         */
+        public readonly int $arCount,
+    ) {}
+
+    /**
+     * Decode a DNS message.
+     *
+     * @param string $data Raw message bytes.
+     *
+     * @return self|null Decoded message, or `null` on error.
+     */
+    public static function message(string $data): ?self
+    {
+        $length = strlen($data);
+        if ($length < 12) {
+            return null;
+        }
+        /** @var array<int>|false */
+        $header = unpack('n6', $data);
+        if ($header === false || count($header) < 6) {
+            return null;
+        }
+        [ $id, $flags, $qdCount, $anCount, $nsCount, $arCount ] = [ ...$header ];
+        return new self($data, $length, $id, $flags, $qdCount, $anCount, $nsCount, $arCount);
+    }
+
+    /**
+     * Check whether DNS message is truncated.
+     *
+     * @return boolean True if message is truncated.
+     */
+    public function isTruncated(): bool
+    {
+        return ($this->flags & 0x0200) != 0;
+    }
+
+    public function __toString(): string
+    {
+        return bin2hex($this->data);
+    }
+}
+
 final class Server
 {
     public function __construct(
@@ -200,9 +275,7 @@ final class Server
          * Input stream.
          */
         private readonly string  $input,
-    ) {
-        // Do nothing
-    }
+    ) {}
 
     /**
      * Process error.
@@ -223,9 +296,9 @@ final class Server
     /**
      * Parse DoH request.
      *
-     * @return string|null Raw DNS request bytes, or `null` on error.
+     * @return DnsMessage|null DNS request, or `null` on error.
      */
-    public function parseRequest(): ?string
+    public function parseRequest(): ?DnsMessage
     {
         switch ($this->method) {
             case 'GET':
@@ -244,7 +317,7 @@ final class Server
                     $this->processError(400, 'decode error');
                     return null;
                 }
-                return $data;
+                break;
             case 'POST':
                 if ($this->inputType === null) {
                     $this->processError(400, 'no content type');
@@ -259,23 +332,29 @@ final class Server
                     $this->processError(400, 'input read error');
                     return null;
                 }
-                return $data;
+                break;
             default:
                 $this->processError(405, 'unrecognized method ' . $this->method);
                 return null;
         }
+        $msg = DnsMessage::message($data);
+        if ($msg === null) {
+            $this->processError(400, 'format error');
+            return null;
+        }
+        return $msg;
     }
 
     /**
      * Attempt to forward DNS message to a real DNS server.
      *
-     * @param string $proto   Protocol ('udp' or 'tcp').
-     * @param string $server  Real DNS server (host and port).
-     * @param string $request DNS request.
+     * @param string     $proto   Protocol ('udp' or 'tcp').
+     * @param string     $server  Real DNS server (host and port).
+     * @param DnsMessage $request DNS request.
      *
-     * @return string|null DNS response, or `null` on error.
+     * @return DnsMessage|null DNS response, or `null` on error.
      */
-    private function forwardRequestInternal(string $proto, string $server, string $request): ?string
+    private function forwardRequestInternal(string $proto, string $server, DnsMessage $request): ?DnsMessage
     {
         $addr = $proto . '://' . $server;
         $sock = stream_socket_client($addr, $err, $msg, $this->config->timeout);
@@ -284,9 +363,9 @@ final class Server
             return null;
         }
         stream_set_timeout($sock, $this->config->timeout);
-        $data = $request;
+        $data = $request->data;
         if ($proto === 'tcp') {
-            $data = pack('n', strlen($data)) . $data;
+            $data = pack('n', $request->length) . $data;
         }
         if (fwrite($sock, $data) === false) {
             $this->config->error(false, 'DNS server "%s", protocol %s: write error', $server, $proto);
@@ -299,8 +378,8 @@ final class Server
             $this->config->error(false, 'DNS server "%s", protocol %s: empty response', $server, $proto);
             return null;
         }
+        $len = strlen($resp);
         if ($proto === 'tcp') {
-            $len = strlen($resp);
             if ($len < 2) {
                 $this->config->error(false, 'DNS server "%s", protocol %s: response is too short', $server, $proto);
                 return null;
@@ -319,23 +398,24 @@ final class Server
                 return null;
             }
         }
-        return $resp;
+        $msg = DnsMessage::message($resp);
+        if ($msg === null) {
+            $this->config->error(false, 'DNS server "%s", protocol %s: malformed response', $server, $proto);
+            return null;
+        }
+        return $msg;
     }
 
     /**
      * Forward DNS message to a real DNS server.
      *
-     * @param string $request DNS request.
+     * @param DnsMessage $request DNS request.
      *
-     * @return string|null DNS response, or `null` on error.
+     * @return DnsMessage|null DNS response, or `null` on error.
      */
-    public function forwardRequest(string $request): ?string
+    public function forwardRequest(DnsMessage $request): ?DnsMessage
     {
-        $this->config->info('REQUEST: %s', bin2hex($request));
-        if ($request === '') {
-            $this->processError(400, 'empty request');
-            return null;
-        }
+        $this->config->info('REQUEST: %s', $request);
         $server = $this->config->chooseServer();
         $this->config->info('SERVER: %s', $server);
         $resp = $this->forwardRequestInternal('udp', $server, $request);
@@ -343,14 +423,11 @@ final class Server
             $this->processError(500, 'UDP request failure');
             return null;
         }
-        if (strlen($resp) >= 3) {
-            $flag = ord($resp[2]);
-            if (($flag & 0x02) !== 0) {
-                $this->config->info('UDP response is truncated, retrying TCP');
-                $resp = $this->forwardRequestInternal('tcp', $server, $request);
-                if ($resp === null) {
-                    $this->processError(500, 'TCP request failure');
-                }
+        if ($resp->isTruncated()) {
+            $this->config->info('UDP response is truncated, retrying TCP');
+            $resp = $this->forwardRequestInternal('tcp', $server, $request);
+            if ($resp === null) {
+                $this->processError(500, 'TCP request failure');
             }
         }
         return $resp;
@@ -359,19 +436,19 @@ final class Server
     /**
      * Send response to client.
      *
-     * @param string $response DNS response.
+     * @param DnsMessage $response DNS response.
      *
      * @return void
      */
-    public function sendResponse(string $response): void
+    public function sendResponse(DnsMessage $response): void
     {
-        $this->config->info('RESPONSE: %s', bin2hex($response));
+        $this->config->info('RESPONSE: %s', $response);
         if ($this->config->isCli) {
             return;
         }
         header('Content-Type: ' . RAW_CONTENT_TYPE);
         header('Cache-Control: max-age=0, no-cache');
-        print $response;
+        print $response->data;
     }
 
     /**
