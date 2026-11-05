@@ -245,6 +245,84 @@ final class DnsMessage
         return ($this->flags & 0x0200) != 0;
     }
 
+    private function nameLength(int $offset): int
+    {
+        $slen = 0;
+        while ($offset < $this->length) {
+            $ind = ord($this->data[$offset++]);
+            ++$slen;
+            switch ($ind & 0xC0) {
+                case 0x00: // Regular segment
+                    if ($ind === 0) {
+                        return $slen;
+                    }
+                    $slen   += $ind;
+                    $offset += $ind;
+                    break;
+                case 0xC0: // Compressed name
+                    ++$slen;
+                    return $slen;
+                default:
+                    return -1;
+            }
+        }
+        return -1;
+    }
+
+    private function qdLength(int $offset): int
+    {
+        $slen = 0;
+        for ($idx = 0; $idx < $this->qdCount; ++$idx) {
+            $nlen = $this->nameLength($offset);
+            if ($nlen <= 0) {
+                return -1;
+            }
+            $offset += $nlen;
+            $slen   += $nlen;
+            if (($this->length - $offset) < 4) {
+                return -1;
+            }
+            $offset += 4;
+            $slen   += 4;
+        }
+        return $slen;
+    }
+
+    public function minTTL(): int
+    {
+        $offset = 12;
+        if (($len = $this->qdLength($offset)) <= 0) {
+            return -1;
+        }
+        $offset += $len;
+        $minTTL  = -1;
+        for ($idx = 0; $idx < $this->anCount; ++$idx) {
+            $nlen = $this->nameLength($offset);
+            if ($nlen <= 0) {
+                return -1;
+            }
+            $offset += $nlen;
+            if (($this->length - $offset) < 10) {
+                return -1;
+            }
+            /** @var array<int>|false */
+            $rr = unpack('ntype/ncls/Nttl/nrdlen', $this->data, $offset);
+            if ($rr === false) {
+                return -1;
+            }
+            [ 'type' => $type, 'cls' => $cls, 'ttl' => $ttl, 'rdlen' => $rdlen ] = $rr;
+            $offset += 10;
+            if ($minTTL < 0 || $ttl < $minTTL) {
+                $minTTL = $ttl;
+            }
+            if (($this->length - $offset) < $rdlen) {
+                return -1;
+            }
+            $offset += $rdlen;
+        }
+        return $minTTL;
+    }
+
     public function __toString(): string
     {
         return bin2hex($this->data);
@@ -443,11 +521,16 @@ final class Server
     public function sendResponse(DnsMessage $response): void
     {
         $this->config->info('RESPONSE: %s', $response);
+        $minTTL = $response->minTTL();
+        if ($minTTL < 0) {
+            $minTTL = 0;
+        }
         if ($this->config->isCli) {
+            $this->config->info('RESPONSE TTL: %d', $minTTL);
             return;
         }
         header('Content-Type: ' . RAW_CONTENT_TYPE);
-        header('Cache-Control: max-age=0, no-cache');
+        header('Cache-Control: max-age=' . $minTTL);
         print $response->data;
     }
 

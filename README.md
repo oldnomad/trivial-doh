@@ -75,6 +75,7 @@ $ php ./src/doh.php GET AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: [2001:4860:4860::8888]:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004ac4293f3c00c000100010000012c00046814179a
+RESPONSE TTL: 300
 $ ./scripts/dns-decode.pl 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004ac4293f3c00c000100010000012c00046814179a
 ;; HEADER SECTION
 ;;      id = 0
@@ -103,6 +104,7 @@ $ ./scripts/dns-encode.pl www.example.com A | php ./src/doh.php POST
 REQUEST: 00000100000100000000000003777777076578616d706c6503636f6d0000010001
 SERVER: 8.8.8.8:53
 RESPONSE: 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004082f4506c00c000100010000012c000408067006
+RESPONSE TTL: 300
 $ ./scripts/dns-decode.pl 00008180000100020000000003777777076578616d706c6503636f6d0000010001c00c000100010000012c0004082f4506c00c000100010000012c000408067006
 ;; HEADER SECTION
 ;;      id = 0
@@ -126,10 +128,5 @@ www.example.com.        300     IN      A       8.6.112.6
 
 ## Possible future improvements
 
-- Current version of the script always sets `max-age` parameter to zero in
-  `Cache-Control` header in the response, to prevent caching. RFC recommends
-  using answer RRs minimum TTL instead. Current behavior prevents caching
-  responses even when they are still valid.
-
-- Current version of the script doesn't cache responses, possibly creating
-  unnecessary extra load on the parent DNS server.
+- Since we already partially parse the response now, it's possible to
+  improve logging and print decoded request/response contents.
